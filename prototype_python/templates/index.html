@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/style.css">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Inclure les fichiers CSS et JavaScript de Leaflet.js -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <title>Document</title>
+</head>
+
+<body>
+    <div class="sections">
+        <div class="input_section">
+            <p>Départ</p>
+            <!-- A FINIR PLUS TARD -->
+            <input />
+            <p>Arrivée</p>
+            <!-- A FINIR PLUS TARD -->
+            <input />
+        </div>
+
+        <div class="middle">
+            <div id="mapid" class="row map_section">
+            </div>
+
+            <div class="row legend">
+                <p>Légende</p>
+                <p><img src="" alt="legend_piste_cyclable"> : piste cyclable</p>
+                <p><img src="" alt="legend_piste_cyclable"> : rue pavée</p>
+                <p><img src="" alt="legend_piste_cyclable"> : rue goudronée</p>
+                <p><img src="" alt="legend_piste_cyclable"> : départementale</p>
+                <p><img src="" alt="legend_piste_cyclable"> : nationale</p>
+                <p><img src="" alt="legend_piste_cyclable"> : autoroute</p>
+            </div>
+        </div>
+
+        <script>
+            var mymap = L.map('mapid').setView([48.846971, 2.356333], 18);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
+                    '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+                    'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+                maxZoom: 18,
+            }).addTo(mymap);
+        </script>
+
+        <div class="route_listing_section">
+            <p style="text-align: left;">Liste des trajets :</p>
+            <ul class="list-group">
+                <a href="">
+                    <li>
+                        2 km | 00:25:07
+                        <span class="badge" style="background-color: red;">3</span>
+                    </li>
+                </a>
+                <a href="">
+                    <li>2 km | 00:25:07
+                        <span class="badge" style="background-color: green;">10</span>
+                    </li>
+                </a>
+                <a href="">
+                    <li>2 km | 00:25:07
+                        <span class="badge" style="background-color: orange;">6</span>
+                    </li>
+                </a>
+                <a href="">
+                    <li>2 km | 00:25:07
+                        <span class="badge" style="background-color: red;">0</span>
+                    </li>
+                </a>
+            </ul>
+        </div>
+    </div>
+
+</body>
+
+</html>

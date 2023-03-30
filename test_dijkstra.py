@@ -26,15 +26,16 @@ queue = [[0, 0, 0, 0, 1]]
 cost = heapq.heappop(queue)
 print(cost)
 
-print(np.any(np.array([[1,2,1],[3,2,1]])[:,:-1]>np.array([1,1,2])[:-1], axis=1))
+#print(np.any(np.array([[1,2,1],[3,2,1]])[:,:-1]>np.array([1,1,2])[:-1], axis=1))
 
 dijkstra = dijkstra.multi_criteria_dijkstra()
-print(dijkstra.dijkstra(G,1,6))
+#print(dijkstra.dijkstra(G,1,6))
 
 test = np.array([[1,3,1],[4,2,2],[8,8,3],[2,3,4]])
-print(np.ones(test.shape[0], dtype=bool))
-print(dijkstra.pareto_front(test))
-
+#print(np.ones(test.shape[0], dtype=bool))
+print(dijkstra.pareto_front_paretoset(test))
+'''
 print(dijkstra.try_add_new_cost(test, [[1,2,1]]))
 print(dijkstra.try_add_new_cost(test, [[2,3,2]]))
 print(dijkstra.try_add_new_cost([], [[2,3,2]]))
+'''

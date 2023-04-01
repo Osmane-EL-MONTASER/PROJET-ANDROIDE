@@ -1,0 +1,43 @@
+/* Couleurs pour le fond et le texte */
+body {
+    background-color: #1F1F23;
+    color: #C9D1D9;
+  }
+  
+  /* Couleur pour les liens */
+  a {
+    color: #58A6FF;
+  }
+  
+  /* Couleur pour les titres */
+  h1, h2, h3, h4, h5, h6 {
+    color: #C9D1D9;
+  }
+  
+  /* Couleur pour les blocs de code */
+  pre, code {
+    background-color: #282C34;
+    color: #ABB2BF;
+  }
+  
+  /* Couleur pour les blocs de citations */
+  blockquote {
+    background-color: #2D3139;
+    color: #9DA5B4;
+  }
+  
+  /* Couleur pour les listes */
+  ul, ol {
+    color: #C9D1D9;
+  }
+  
+  /* Couleur pour les bordures des tableaux */
+  table {
+    border: 1px solid #1F1F23;
+  }
+  
+  /* Couleur pour les liens des tableaux */
+  table a {
+    color: #58A6FF;
+  }
+  

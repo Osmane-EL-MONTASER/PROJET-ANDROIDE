@@ -1,7 +1,7 @@
 import networkx as nx
 import heapq
 import numpy as np
-from paretoset import paretoset
+from paretoset import paretoset, non_dominated
 
 
 class multi_criteria_dijkstra:
@@ -87,7 +87,7 @@ class multi_criteria_dijkstra:
         """
         return paretoset(lst)
     
-    def update_pareto_front(self,new_cost,lst):
+    def update_pareto_front(self, new_cost, lst):
         """
         Fonction qui pour une liste de vecteurs de coût (non dominés entre eux) et un nouveau vecteur de coût 
         met à jour le front de Pareto (si le nouveau vecteur est dominé, ne l'ajoute pas, sinon, supprime les vecteurs
@@ -106,7 +106,7 @@ class multi_criteria_dijkstra:
         front:np.array
             np.array de taille de la lst, avec pour chaque valeur à l'index donné qui indique si le vecteur est non dominé ou dominé
         """
-        front = np.ones(lst.shape[0]+1,dtype=bool) #le dernier élément correspond au new_cost
+        front = np.ones(len(lst)+1,dtype=bool) #le dernier élément correspond au new_cost
         front[-1] = False
         for i,c in enumerate(lst):
             if np.all(new_cost<c):
@@ -114,6 +114,21 @@ class multi_criteria_dijkstra:
                 front[-1] = True        
         return lst[front], front[-1]
                 
+    
+    def update_pareto_front_dct(self, new_cost, dct):
+        front = False
+        for k,v in dct.items():
+            if np.all(new_cost<v):
+                del dct[k]
+                front = True 
+        if front == True:
+            etiq = max(dct.keys()) + 1
+            dct[etiq] = new_cost
+        else:
+            etiq = None
+        return dct, front, etiq
+    
+    
     
     def heuristique(self, G: nx.Graph, node, end):
         x1, y1 = node.coord
@@ -181,18 +196,11 @@ class multi_criteria_dijkstra:
 
 
 
-
-
-
-
-
-
-
     
     def a_star(self, G: nx.Graph, start, end, heuristique=heuristique):
         # initialisation de la liste open_nodes et du set closed_nodes
-        open_nodes = [start]
-        open_etiquettes = [(start,0,[0]*self.nb_criteria)]
+        open_nodes = set(start)
+        open_etiquettes = [self.heuristique(G, start, end),start,0,([0]*self.nb_criteria)]
         closed_etiquettes = {}
         closed_nodes = set()
         
@@ -207,6 +215,7 @@ class multi_criteria_dijkstra:
         
         # initialisation liste des solutions
         solutions = []  # éléments de la forme [path, cost]
+        solutions_costs = []
         
         """
         while open_nodes:
@@ -238,9 +247,13 @@ class multi_criteria_dijkstra:
                         
                         
                         # trier open_nodes en fonction des étiquettes les plus prometteuses
-"""
+        """
         while open_etiquettes:
-            curr_node, curr_etiq, curr_cost = heapq.heappop(open_etiquettes)
+            _, curr_node, curr_etiq, curr_cost = heapq.heappop(open_etiquettes)
+            if closed_etiquettes[curr_node] == None:
+                closed_etiquettes[curr_node] = set(curr_etiq)
+            else:
+                closed_etiquettes[curr_node].add(curr_etiq)
             
             if curr_node == end:
                 path = []
@@ -249,34 +262,42 @@ class multi_criteria_dijkstra:
                     curr_node, curr_etiq = cost_from[curr_node], cost_from[curr_node][curr_etiq]
                 path = list(reversed(path))
                 solutions.append([path,curr_cost])
+                solutions_costs.append(curr_cost)
+                
             
             else:
-                #Visit each neighbor of the current node
+                # Visit each neighbor of the current node
                 for _, v, data in G.edges(curr_node, data = True):
+                    '''
                     if v in closed_nodes:
                         continue
+                    '''
+                    new_cost = costs[curr_node][curr_etiq] + data['weight']
+                    est_cost = new_cost + self.heuristique(G, v, end)
                     
-                    new_cost = costs[curr_node][etiq] + data['weight']
+                    tmp_list = solutions_costs + [est_cost]
+                    if est_cost not in non_dominated(tmp_list):
+                        continue
                     
                     if v not in open_nodes:
-                        open_nodes.append(v)
-                        open_etiquettes.append((v,0,new_cost))
+                        open_nodes.add(v)
+                        open_etiquettes.append((est_cost,v,0, new_cost))
                         cost_from[v][0] = curr_etiq
                                             
                     else:
-                        
-                        lst, updated = update_pareto_front(self,new_cost,lst)
+                        costs[v], updated, new_etiq = self.update_pareto_front_dct(new_cost,costs[v])
                         if updated:
-                            k = len(costs[v])
-                            cost_from[v][k+1] = curr_etiq
-                            open_etiquettes.append((v,k+1,new_cost))
+                            cost_from[v][new_etiq] = curr_etiq
+                            open_etiquettes.append((est_cost, v, new_etiq, new_cost))
                         else:
                             continue
             # trier les étiquettes ouvertes selon les coûts estimés avec l'heuristique (selon le 1er objectif)
-                        
-                    est_cost = temp_cost + heuristique(self, G, v, end)
-                    
-            closed_etiquettes[curr_node]
+            open_etiquettes = sorted(open_etiquettes)
+        
+        return solutions
+        
+            
+            
              
     
             

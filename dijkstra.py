@@ -1,19 +1,21 @@
 import networkx as nx
 import heapq
 import numpy as np
-from paretoset import paretoset, non_dominated
+from paretoset import paretoset
 
 
 class multi_criteria_dijkstra:
     """
     Classe pour gérer les opérations de dijsktra multi-objectifs
     """
+    cost_dtype = np.dtype([('weights', list), ('prevnode', int), ('node', int), ('previd', int), ('id', int)])
+
     def __init__(self, G = None, nb_criteria = 4):
         self.G = G
         self.nb_criteria = nb_criteria
 
 
-    def try_add_new_cost(self, lst:np.array, newcost:list):
+    def try_add_new_cost(self, lstcost:np.recarray, newcost, pareto_func):
         """
         Fonction qui pour une liste de vecteurs coût donné, essaye d'ajouter un nouveau vecteur coût à cette liste
         
@@ -22,26 +24,25 @@ class multi_criteria_dijkstra:
         Parameters
         ----------
         self
-        lst:np.array
+        lstcost
             Liste de vecteur coût à modifier
-        newcost:list
+        newcost
             Nouveau vecteur coût que l'on tente de rajouter
 
         Returns
         -------
-        lst
+        lstcost
             Liste de vecteur coût après tentative d'ajout du vecteur
-        is_updated
+        has_updated
             True si le vecteur coût a été rajouté, False sinon
         """
-        if np.array(lst).shape[0] == 0:
-            lst = np.array(newcost)
-        else:
-            lst = np.append(lst, newcost, axis = 0)
-        front = self.pareto_front(lst)
-        is_updated = front[-1]
-        lst = lst[front]
-        return lst, is_updated
+        lstcopy = lstcost.copy()
+        lstcopy.resize(lstcost.shape[0] + 1, refcheck=False)
+        lstcopy[-1] = newcost
+        front = pareto_func(lstcopy.weights.tolist())
+        has_updated = front[-1]
+        lstcopy = lstcopy[front]
+        return lstcopy, has_updated
 
     def pareto_front(self, lst:np.array):
         """
@@ -64,7 +65,7 @@ class multi_criteria_dijkstra:
         front = np.ones(costs.shape[0], dtype = bool)
         for i, c in enumerate(costs):
             if front[i]:
-                front[front] = np.any(costs[front][:,:-1]<c[:-1], axis=1)  # Keep any point with a lower cost
+                front[front] = np.any(costs[front]<c, axis=1)  # Keep any point with a lower cost
                 front[i] = True  # And keep self
         return front
     
@@ -135,7 +136,14 @@ class multi_criteria_dijkstra:
         x2, y2 = end.coord
         return np.array([np.sqrt((x1-x2)**2+(y1-y2)**2),0,0,0])
     
-       
+    class cost_class:
+        def __init__(self, weights, prevnode, node, previd, id):
+            self.weights = weights
+            self.prevnode = prevnode
+            self.node = node
+            self.previd = previd
+            self.id = id
+
     def dijkstra(self, G: nx.Graph, start, end):
         """
         Fonction pour faire le dijkstra multi-objectifs.
@@ -158,45 +166,42 @@ class multi_criteria_dijkstra:
             Dictionnaire contenant les différents vecteurs de coût pour ce noeud
         """
         costs = {}
+        
+        start_cost = ([0 for i in range(self.nb_criteria)], -1, start, -1, 0)
+        costs[start] = np.recarray((1,), dtype=self.cost_dtype)
+        costs[start][0] = start_cost
 
-        queue = [0 for i in range(self.nb_criteria)]
-        costs[start] = queue
-        queue.append(start)
-        queue = [queue]
-
+        queue = []
+        heapq.heappush(queue, [start_cost[0], start_cost])
+        
+        counterid = 0
+        updated = False
         while queue:
-            #Pop the current node and its vector cost
-            cost = heapq.heappop(queue)
-            u = cost[-1]
-            
-            if end in costs.keys():
-                if np.all(np.any(costs[end][:,:-1]<cost[:-1], axis=1)):
+            #Pop le noeud courant et récupère son cout associé
+            cost = heapq.heappop(queue)[1]
+            if end in costs.keys():  #Si le noeud terminal a été atteint, verifier si le noeud courant est strictement dominé ou pas par les vecteurs couts déjà existants
+                if np.all(np.any(np.array(costs[end].weights.tolist())<cost[0], axis=1)):
                     pass
+            #Visiter tout les voisins du noeud courant
+            for _, v, data in G.edges(cost[2], data = True):
+                #Données des aretes voisines retourné en 3-tuple (u, v, ddict[data])
+                counterid += 1
+                nextweight = np.array(cost[0]) + data['weight'] #Cout du prochain noeud à visiter
+                nextweight = nextweight.tolist()
+                nextcost = (nextweight, cost[2], v, cost[4], counterid)
 
-            #Visit each neighbor of the current node
-            for _, v, data in G.edges(u, data = True):
-                #edge attribute returned in 3-tuple (u, v, ddict[data])
-                nextcost = []
-                
-                for i in range(len(cost)-1):
-                    nextcost.append(cost[i] + data['weight'][i])
-                nextqueue = nextcost.copy()
-
-                nextcost.append(u)
-                nextqueue.append(v)
                 if v not in costs:
-                    costs[v] = []
-
-                costs[v], updated = self.try_add_new_cost(costs[v], [nextcost])
+                    costs[v] = np.recarray(1, dtype=self.cost_dtype)
+                    costs[v][0] = nextcost
+                    updated = True
+                else:
+                    costs[v], updated = self.try_add_new_cost(costs[v], nextcost, self.pareto_front)
 
                 if updated:
-                    heapq.heappush(queue, nextqueue)
+                    heapq.heappush(queue, [nextcost[0], nextcost])
 
         return costs
 
-
-
-    
     def a_star(self, G: nx.Graph, start, end, heuristique=heuristique):
         # initialisation de la liste open_nodes et du set closed_nodes
         open_nodes = set(start)
@@ -276,7 +281,7 @@ class multi_criteria_dijkstra:
                     est_cost = new_cost + self.heuristique(G, v, end)
                     
                     tmp_list = solutions_costs + [est_cost]
-                    if est_cost not in non_dominated(tmp_list):
+                    if est_cost not in self.pareto_front_paretoset(tmp_list):
                         continue
                     
                     if v not in open_nodes:
@@ -295,19 +300,3 @@ class multi_criteria_dijkstra:
             open_etiquettes = sorted(open_etiquettes)
         
         return solutions
-        
-            
-            
-             
-    
-            
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    

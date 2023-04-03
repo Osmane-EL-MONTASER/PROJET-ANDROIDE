@@ -166,7 +166,6 @@ class multi_criteria_dijkstra:
             Dictionnaire contenant les différents vecteurs de coût pour ce noeud
         """
         costs = {}
-        
         start_cost = ([0 for i in range(self.nb_criteria)], -1, start, -1, 0)
         costs[start] = np.recarray((1,), dtype=self.cost_dtype)
         costs[start][0] = start_cost
@@ -202,7 +201,7 @@ class multi_criteria_dijkstra:
 
         return costs
 
-    def a_star(self, G: nx.Graph, start, end, heuristique=heuristique):
+    """def a_star(self, G: nx.Graph, start, end):
         # initialisation de la liste open_nodes et du set closed_nodes
         open_nodes = set(start)
         open_etiquettes = [self.heuristique(G, start, end),start,0,([0]*self.nb_criteria)]
@@ -222,7 +221,7 @@ class multi_criteria_dijkstra:
         solutions = []  # éléments de la forme [path, cost]
         solutions_costs = []
         
-        """
+        '''
         while open_nodes:
             curr_node = heapq.heappop(open_nodes)
             
@@ -252,7 +251,7 @@ class multi_criteria_dijkstra:
                         
                         
                         # trier open_nodes en fonction des étiquettes les plus prometteuses
-        """
+        '''
         while open_etiquettes:
             _, curr_node, curr_etiq, curr_cost = heapq.heappop(open_etiquettes)
             if closed_etiquettes[curr_node] == None:
@@ -299,4 +298,50 @@ class multi_criteria_dijkstra:
             # trier les étiquettes ouvertes selon les coûts estimés avec l'heuristique (selon le 1er objectif)
             open_etiquettes = sorted(open_etiquettes)
         
-        return solutions
+        return solutions"""
+    
+    def a_star(self, G: nx.Graph, start, end):
+        costs = {}
+        
+        start_heuristic = G.nodes[start]['heuristique']
+        start_cost = ([0 + start_heuristic for i in range(self.nb_criteria)], -1, start, -1, 0)
+        costs[start] = np.recarray((1,), dtype=self.cost_dtype)
+        costs[start][0] = start_cost
+
+        G.add_node(-1, label = "Dummy", heuristique = 0)
+        queue = []
+        heapq.heappush(queue, [start_cost[0], start_cost])
+        counterid = 0
+        updated = False
+        while queue:
+            #Pop le noeud courant et récupère son cout associé
+            queued = heapq.heappop(queue)
+            print(queued)
+            cost = queued[1] #([c_v1 + heur_v,..., c_vn + heur_v], u, v, prevedgeid, curedgeid)
+            if end in costs.keys():  #Si le noeud terminal a été atteint, verifier si le noeud courant est strictement dominé ou pas par les vecteurs couts déjà existants
+                heuristic = np.array(cost[0]) + G.nodes[cost[2]]['heuristique'] - G.nodes[cost[1]]['heuristique']
+                if np.all(np.any(np.array(costs[end].weights.tolist())<heuristic, axis=1)):
+                    pass
+            
+            #Visiter tout les voisins du noeud courant
+            for _, v, data in G.edges(cost[2], data = True):
+                #Données des aretes voisines retourné en 3-tuple (u, v, ddict[data])
+                
+                counterid += 1
+                nextweight = np.array(queued[0]) + data['weight'] - G.nodes[cost[1]]['heuristique']#Cout du prochain noeud à visiter
+                nextcost = (nextweight, cost[2], v, cost[4], counterid)
+
+                if v not in costs:
+                    costs[v] = np.recarray(1, dtype=self.cost_dtype)
+                    costs[v][0] = nextcost
+                    updated = True
+                else:
+                    costs[v], updated = self.try_add_new_cost(costs[v], nextcost, self.pareto_front)
+
+                if updated:
+                    nextheuristic = nextweight + G.nodes[v]['heuristique']#Heuristique du prochain noeud à visiter
+                    nextheuristic = nextheuristic.tolist()
+                    heapq.heappush(queue, [nextheuristic, nextcost])
+
+        return costs
+    

@@ -8,10 +8,7 @@ def get_heuristique(start, end):
     if start.get('heuristique') is None:
         x1, y1 = start['lon'], start['lat']
         x2, y2 = end['lon'], end['lat']
-        print((x1,y1))
-        print((x2,y2))
         start['heuristique'] = get_distance(y1,x1,y2,x2)
-        print(start['heuristique'])
     return start['heuristique']
     
 def get_distance(lat_start, lon_start, lat_goal, long_goal):
@@ -315,21 +312,23 @@ class multi_criteria_dijkstra:
         costs = {}
         
         start_heuristic = get_heuristique(G.nodes[start], G.nodes[end])
-        start_cost = ([0 + start_heuristic for i in range(self.nb_criteria)], -1, start, -1, 0)
+        start_cost = np.array([0 for _ in range(self.nb_criteria)])
+        
+        to_add_queue = (start_cost + start_heuristic, -1, start, -1, 0)
         costs[start] = np.recarray((1,), dtype=self.cost_dtype)
-        costs[start][0] = start_cost
+        costs[start][0] = (start_cost, -1, start, -1, 0)
 
         G.add_node(-1, label = "Dummy", heuristique = 0)
         queue = []
-        heapq.heappush(queue, [start_cost[0], start_cost])
+        heapq.heappush(queue, [to_add_queue[0], to_add_queue])
         counterid = 0
         while queue:
-            updated = False
             #Pop le noeud courant et récupère son cout associé
             queued = heapq.heappop(queue)
             #print("NB NOEUDS DANS QUEUE:{}".format(len(queue)))
             #print(queued)
             cost = queued[1] #([c_v1 + heur_v,..., c_vn + heur_v], u, v, prevedgeid, curedgeid)
+            
             if end in costs.keys():  #Si le noeud terminal a été atteint, verifier si le noeud courant est strictement dominé ou pas par les vecteurs couts déjà existants
                 nextheur = get_heuristique(G.nodes[cost[2]], G.nodes[end])
                 prevheur = get_heuristique(G.nodes[cost[1]], G.nodes[end])
@@ -340,20 +339,22 @@ class multi_criteria_dijkstra:
             #Visiter tout les voisins du noeud courant
             for _, v, data in G.edges(cost[2], data = True):
                 #Données des aretes voisines retourné en 3-tuple (u, v, ddict[data])
-                
+                updated = False
                 counterid += 1
-                prevheurvisited = get_heuristique(G.nodes[cost[1]], G.nodes[end])
-                nextweight = np.array(queued[0]) + data['weight'] - prevheurvisited #Cout du prochain noeud à visiter
+                prevheurvisited = get_heuristique(G.nodes[cost[2]], G.nodes[end])
+                curweight = np.array(queued[0]) - prevheurvisited
+                nextweight =  curweight + data['weight']#Cout du prochain noeud à visiter
                 nextcost = (nextweight, cost[2], v, cost[4], counterid)
-
                 if v not in costs:
                     costs[v] = np.recarray(1, dtype=self.cost_dtype)
-                    costs[v][0] = nextcost
+                    costs[v][0] = (curweight, cost[2], v, cost[4], counterid)
                     updated = True
                 else:
                     costs[v], updated = self.try_add_new_cost(costs[v], nextcost, self.pareto_front)
 
                 if updated:
+                    if v == end:
+                        continue
                     nextheurupdated = get_heuristique(G.nodes[v], G.nodes[end])
                     nextheuristic = nextweight + nextheurupdated#Heuristique du prochain noeud à visiter
                     nextheuristic = nextheuristic.tolist()

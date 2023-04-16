@@ -2,13 +2,28 @@ import networkx as nx
 import heapq
 import numpy as np
 from paretoset import paretoset
+import geopy.distance
+
+def get_heuristique(start, end):
+    if start.get('heuristique') is None:
+        x1, y1 = start['lon'], start['lat']
+        x2, y2 = end['lon'], end['lat']
+        print((x1,y1))
+        print((x2,y2))
+        start['heuristique'] = get_distance(y1,x1,y2,x2)
+        print(start['heuristique'])
+    return start['heuristique']
+    
+def get_distance(lat_start, lon_start, lat_goal, long_goal):
+    distance = geopy.distance.geodesic((lat_goal, long_goal), (lat_start, lon_start)).m
+    return distance
 
 
 class multi_criteria_dijkstra:
     """
     Classe pour gérer les opérations de dijsktra multi-objectifs
     """
-    cost_dtype = np.dtype([('weights', list), ('prevnode', int), ('node', int), ('previd', int), ('id', int)])
+    cost_dtype = np.dtype([('weights', list), ('prevnode', np.int64), ('node', np.int64), ('previd', np.int64), ('id', np.int64)])
 
     def __init__(self, G = None, nb_criteria = 4):
         self.G = G
@@ -128,14 +143,7 @@ class multi_criteria_dijkstra:
         else:
             etiq = None
         return dct, front, etiq
-    
-    
-    
-    def heuristique(self, G: nx.Graph, node, end):
-        x1, y1 = node.coord
-        x2, y2 = end.coord
-        return np.array([np.sqrt((x1-x2)**2+(y1-y2)**2),0,0,0])
-    
+
     class cost_class:
         def __init__(self, weights, prevnode, node, previd, id):
             self.weights = weights
@@ -174,13 +182,16 @@ class multi_criteria_dijkstra:
         heapq.heappush(queue, [start_cost[0], start_cost])
         
         counterid = 0
-        updated = False
         while queue:
+            updated = False
             #Pop le noeud courant et récupère son cout associé
             cost = heapq.heappop(queue)[1]
+            #print("NB NOEUDS DANS QUEUE:{}".format(len(queue)))
+            #print(cost)
             if end in costs.keys():  #Si le noeud terminal a été atteint, verifier si le noeud courant est strictement dominé ou pas par les vecteurs couts déjà existants
+                print(costs[end].weights.tolist())
                 if np.all(np.any(np.array(costs[end].weights.tolist())<cost[0], axis=1)):
-                    pass
+                    continue
             #Visiter tout les voisins du noeud courant
             for _, v, data in G.edges(cost[2], data = True):
                 #Données des aretes voisines retourné en 3-tuple (u, v, ddict[data])
@@ -303,7 +314,7 @@ class multi_criteria_dijkstra:
     def a_star(self, G: nx.Graph, start, end):
         costs = {}
         
-        start_heuristic = G.nodes[start]['heuristique']
+        start_heuristic = get_heuristique(G.nodes[start], G.nodes[end])
         start_cost = ([0 + start_heuristic for i in range(self.nb_criteria)], -1, start, -1, 0)
         costs[start] = np.recarray((1,), dtype=self.cost_dtype)
         costs[start][0] = start_cost
@@ -312,23 +323,27 @@ class multi_criteria_dijkstra:
         queue = []
         heapq.heappush(queue, [start_cost[0], start_cost])
         counterid = 0
-        updated = False
         while queue:
+            updated = False
             #Pop le noeud courant et récupère son cout associé
             queued = heapq.heappop(queue)
-            print(queued)
+            #print("NB NOEUDS DANS QUEUE:{}".format(len(queue)))
+            #print(queued)
             cost = queued[1] #([c_v1 + heur_v,..., c_vn + heur_v], u, v, prevedgeid, curedgeid)
             if end in costs.keys():  #Si le noeud terminal a été atteint, verifier si le noeud courant est strictement dominé ou pas par les vecteurs couts déjà existants
-                heuristic = np.array(cost[0]) + G.nodes[cost[2]]['heuristique'] - G.nodes[cost[1]]['heuristique']
+                nextheur = get_heuristique(G.nodes[cost[2]], G.nodes[end])
+                prevheur = get_heuristique(G.nodes[cost[1]], G.nodes[end])
+                heuristic = np.array(cost[0]) + nextheur - prevheur
                 if np.all(np.any(np.array(costs[end].weights.tolist())<heuristic, axis=1)):
-                    pass
-            
+                    continue
+
             #Visiter tout les voisins du noeud courant
             for _, v, data in G.edges(cost[2], data = True):
                 #Données des aretes voisines retourné en 3-tuple (u, v, ddict[data])
                 
                 counterid += 1
-                nextweight = np.array(queued[0]) + data['weight'] - G.nodes[cost[1]]['heuristique']#Cout du prochain noeud à visiter
+                prevheurvisited = get_heuristique(G.nodes[cost[1]], G.nodes[end])
+                nextweight = np.array(queued[0]) + data['weight'] - prevheurvisited #Cout du prochain noeud à visiter
                 nextcost = (nextweight, cost[2], v, cost[4], counterid)
 
                 if v not in costs:
@@ -339,7 +354,8 @@ class multi_criteria_dijkstra:
                     costs[v], updated = self.try_add_new_cost(costs[v], nextcost, self.pareto_front)
 
                 if updated:
-                    nextheuristic = nextweight + G.nodes[v]['heuristique']#Heuristique du prochain noeud à visiter
+                    nextheurupdated = get_heuristique(G.nodes[v], G.nodes[end])
+                    nextheuristic = nextweight + nextheurupdated#Heuristique du prochain noeud à visiter
                     nextheuristic = nextheuristic.tolist()
                     heapq.heappush(queue, [nextheuristic, nextcost])
 

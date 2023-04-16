@@ -347,7 +347,7 @@ class multi_criteria_dijkstra:
                 nextcost = (nextweight, cost[2], v, cost[4], counterid)
                 if v not in costs:
                     costs[v] = np.recarray(1, dtype=self.cost_dtype)
-                    costs[v][0] = (curweight, cost[2], v, cost[4], counterid)
+                    costs[v][0] = nextcost
                     updated = True
                 else:
                     costs[v], updated = self.try_add_new_cost(costs[v], nextcost, self.pareto_front)

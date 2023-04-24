@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'api/requests.dart';
 import 'routeview.dart';
 
 class PCAppHome extends StatefulWidget {
@@ -10,14 +11,24 @@ class PCAppHome extends StatefulWidget {
 
 class _PCAppHomeState extends State<PCAppHome> {
   final ButtonStyle flatButtonStyle = TextButton.styleFrom(
-    foregroundColor: Colors.black,
+    foregroundColor: Colors.white,
     minimumSize: const Size(88, 44),
     padding: const EdgeInsets.symmetric(horizontal: 16.0),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.all(Radius.circular(2.0)),
     ),
-    backgroundColor: Colors.black12,
+    backgroundColor: Color.fromARGB(35, 0, 0, 0),
   );
+
+  final TextEditingController _startAddressController = TextEditingController();
+  final TextEditingController _endAddressController = TextEditingController();
+
+  @override
+  void dispose() {
+    _startAddressController.dispose();
+    _endAddressController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,10 +46,11 @@ class _PCAppHomeState extends State<PCAppHome> {
           const SizedBox(
             height: 100,
           ),
-          const SizedBox(
+          SizedBox(
             width: 300,
             child: TextField(
-              decoration: InputDecoration(
+              controller: _startAddressController,
+              decoration: const InputDecoration(
                 border: OutlineInputBorder(),
                 labelText: 'Adresse de départ',
               ),
@@ -47,10 +59,11 @@ class _PCAppHomeState extends State<PCAppHome> {
           const SizedBox(
             height: 10,
           ),
-          const SizedBox(
+          SizedBox(
             width: 300,
             child: TextField(
-              decoration: InputDecoration(
+              controller: _endAddressController,
+              decoration: const InputDecoration(
                 border: OutlineInputBorder(),
                 labelText: 'Adresse d\'arrivée',
               ),
@@ -62,10 +75,16 @@ class _PCAppHomeState extends State<PCAppHome> {
           TextButton(
             style: flatButtonStyle,
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const RouteView()),
-              );
+              if (_startAddressController.text.isNotEmpty &&
+                  _endAddressController.text.isNotEmpty) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => RouteView(
+                          startAddress: _startAddressController.text,
+                          endAddress: _endAddressController.text)),
+                );
+              }
             },
             child: const Text('Générer l\'itinéraire'),
           )

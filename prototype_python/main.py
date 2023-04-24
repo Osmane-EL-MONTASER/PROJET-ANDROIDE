@@ -21,3 +21,20 @@ def generate_route():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+#Je veux une liste qui comporte toutes les routes possibles :
+routes = [
+    {#<-- fais gaffe c'est un dictionnaire
+        'distance': 156, #<-- distance en mètres
+        'waypoints': [(49.34534, 2.23542), (48.8472876, 2.3534072)]#<-- liste encore
+    },
+    {#<-- fais gaffe c'est un dictionnaire
+        'distance': 156, #<-- distance en mètres
+        'waypoints': [(49.34534, 2.23542), (48.8472876, 2.3534072)]#<-- liste encore
+    },
+    {#<-- fais gaffe c'est un dictionnaire
+        'distance': 156, #<-- distance en mètres
+        'waypoints': [(49.34534, 2.23542), (48.8472876, 2.3534072)]#<-- liste encore
+    }
+]

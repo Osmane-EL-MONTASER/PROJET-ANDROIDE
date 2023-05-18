@@ -60,7 +60,7 @@ class multi_criteria_dijkstra:
         self.nb_criteria = nb_criteria
 
 
-    def try_add_new_cost(self, lstcost:np.recarray, newcost, pareto_func):
+    def try_add_new_cost(self, lstcost:np.recarray, newcost, pareto_func, heuristique, ratio):
         """
         Fonction qui pour une liste de vecteurs coût donné, essaye d'ajouter un nouveau vecteur coût à cette liste
         
@@ -83,11 +83,12 @@ class multi_criteria_dijkstra:
         """
         lstcopy = lstcost.copy()
         lstcopy.resize(lstcost.shape[0] + 1, refcheck=False)
-        lstcopy[-1] = newcost
+        lstcopy[-1] = tuple(np.array(newcost) + heuristique*ratio)
         front = pareto_func(lstcopy.weights.tolist())
         has_updated = front[-1]
         lstcopy = lstcopy[front]
-        print(newcost)
+        if has_updated:
+            lstcopy[-1] = newcost
         return lstcopy, has_updated
 
     def pareto_front(self, lst:np.array):
@@ -345,7 +346,7 @@ class multi_criteria_dijkstra:
         
         return solutions"""
     
-    def a_star(self, G: nx.Graph, start, end):
+    def a_star(self, G: nx.Graph, start, end, ratio, maxdistance):
         costs = {}
         gdraw = nx.Graph()
         start_heuristic = get_heuristique(G.nodes[start], G.nodes[end])
@@ -375,7 +376,7 @@ class multi_criteria_dijkstra:
                 nextheur = get_heuristique(G.nodes[cost[2]], G.nodes[end])
                 prevheur = get_heuristique(G.nodes[cost[1]], G.nodes[end])
                 heuristic = np.array(cost[0]) + nextheur - prevheur
-                if np.all(np.any(np.array(costs[end].weights.tolist())<heuristic, axis=1)):
+                if np.all(np.any(np.array(costs[end].weights.tolist())<heuristic + maxdistance, axis=1)):
                     continue
 
             #Visiter tout les voisins du noeud courant
@@ -384,6 +385,7 @@ class multi_criteria_dijkstra:
                 updated = False
                 counterid += 1
                 prevheurvisited = get_heuristique(G.nodes[cost[2]], G.nodes[end])
+                mindistance = get_heuristique(G.nodes[cost[2]], G.nodes[v])
                 curweight = np.array(queued[0]) - prevheurvisited
                 nextweight =  curweight + data['weight']#Cout du prochain noeud à visiter
                 nextcost = (nextweight, cost[2], v, cost[4], counterid)
@@ -392,7 +394,7 @@ class multi_criteria_dijkstra:
                     costs[v][0] = nextcost
                     updated = True
                 else:
-                    costs[v], updated = self.try_add_new_cost(costs[v], nextcost, self.pareto_front_paretoset)
+                    costs[v], updated = self.try_add_new_cost(costs[v], nextcost, self.pareto_front_paretoset, mindistance, ratio)
 
                 if updated:
                     if v == end:

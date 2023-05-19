@@ -11,7 +11,7 @@ class ndtree:
 
     class nodes:
 
-        def __init__(self, parent = None, children = set(), points_list = set(), ideal_point = None, nadir_point = None, level = 0):
+        def __init__(self, parent = None, children = set(), points_list = [], ideal_point = None, nadir_point = None, level = 0):
             self.parent = parent
             self.children = children
             self.points_list = points_list
@@ -24,18 +24,19 @@ class ndtree:
         self.set_size = set_size
         self.max_children = max_children
 
-    def update_tree(self, y):
+    def update_tree(self, new_cost):
         if self.root is None:
-            points_list = [y]
-            self.root = self.nodes(points_list = points_list, ideal_point=y, nadir_point=y)
+            points_list = [new_cost]
+            self.root = self.nodes(points_list = points_list, ideal_point=new_cost[0], nadir_point=new_cost[0])
         else:
             n = self.root
-            if self.update_node(n, y):
-                self.insert(n, y)
+            if self.update_node(n, new_cost):
+                self.insert(n, new_cost)
+                return True
         #tree.show()
 
     def delete_sub_tree(self, n):
-        n.points_list = set()
+        n.points_list = []
         if n.parent is None:
             return
         self.delete_sub_points(n.parent, n.points_list)
@@ -46,7 +47,8 @@ class ndtree:
             self.remove(n.points_list, point)
         self.delete_sub_points(n.parent, n.points_list)
 
-    def update_node(self, n, y):
+    def update_node(self, n, new_cost):
+        y = new_cost[0]
         if np.all(y>=n.nadir_point):
             return False
         elif np.all(y<=n.ideal_point):
@@ -55,16 +57,17 @@ class ndtree:
         elif np.all(y<=n.nadir_point) or np.all(y>=n.ideal_point):
             if len(n.children) == 0:
                 temp_copy = n.points_list.copy()
-                for z in temp_copy:
+                for pt in temp_copy:
+                    z = pt[0]
                     if np.all(z<=y):
                         return False
                     elif np.all(y<=z) and np.any(y<z):
-                        self.remove(n.points_list, z)
+                        self.remove(n.points_list, pt)
             else:
                 temp_copy = n.children.copy()
                 
                 for child in temp_copy:
-                    if not self.update_node(child, y):
+                    if not self.update_node(child, new_cost):
                         return False
                     else:
                         if len(child.points_list) == 0:
@@ -81,8 +84,9 @@ class ndtree:
                     del temp
         return True
 
-    def insert(self, n, y):
-        n.points_list.append(y)
+    def insert(self, n, new_cost):
+        n.points_list.append(new_cost)
+        y = new_cost[0]
         if len(n.children) == 0:
             #n.points_list.append(y)
             self.update_ideal_nadir(n,y)
@@ -97,20 +101,22 @@ class ndtree:
                 if np.linalg.norm(middlePoint-y) < closest:
                     closest = np.linalg.norm(middlePoint-y)
                     bestchild = child
-            self.insert(bestchild, y)
+            self.insert(bestchild, new_cost)
       
-    def remove(self, n_list,z):
+    def remove(self, n_list, z):
         for i in range(len(n_list)):
             if np.all(n_list[i] == z):
                 del n_list[i]
                 return
             
     def split(self,n):
-        arr = np.array(n.points_list)
+        arr = np.array(n.points_list)[:,0]
         mean_dist = np.mean(np.linalg.norm(arr[:,None,:] - arr[None,:,:], axis=-1),axis=1) #distance moyenne d'un point à tous les autres points
-        z = arr[np.argmax(mean_dist)] # point ayant la plus grande distance moyenne à tous les autres points
+        #z = arr[np.argmax(mean_dist)] # point ayant la plus grande distance moyenne à tous les autres points
+        z = n.points_list[np.argmax(mean_dist)]
+        y = z[0]
         n_list = copy.deepcopy(n.points_list)
-        n_prime = self.nodes(parent=n, nadir_point=list(z), ideal_point=list(z), children = set(), level = n.level+1 )
+        n_prime = self.nodes(parent=n, nadir_point=y, ideal_point=y, children = set(), level = n.level+1 )
         n.children.add(n_prime)
         n_prime.points_list = [z]
         self.remove(n_list, z)
@@ -119,30 +125,32 @@ class ndtree:
             ''' Find the point z with the highest average euclidean distance
             to all points in all children of n'''
             # on crée le np.array arr contenant tous les points restant dans L(n)
-            new_arr = np.array(n_list) 
+            new_arr = np.array(n_list)[:,0] 
             mean_dist = np.mean(np.linalg.norm(new_arr[:,None,:] - arr[None,:,:], axis=-1),axis=1)
-            z = new_arr[np.argmax(mean_dist)]
+            #z = new_arr[np.argmax(mean_dist)]
+            z = n_list[np.argmax(mean_dist)]
 
             n_2 = self.nodes(parent=n, points_list = [], children = set(), level = n.level+1)
             n.children.add(n_2)
             n_2.points_list.append(z)
-            n_2.nadir_point, n_2.ideal_point = z, z
+            n_2.nadir_point, n_2.ideal_point = z[0], z[0]
             self.remove(n_list, z)
 
         while len(n_list) != 0:
             z = n_list[0]
+            y = z[0]
             closest = None
             for child in n.children:
                 middlePoint = (np.array(child.ideal_point) + np.array(child.nadir_point))/2
                 if closest is None:
-                    closest = np.linalg.norm(middlePoint-z)
+                    closest = np.linalg.norm(middlePoint-y)
                     bestchild = child
                 else:
-                    if np.linalg.norm(middlePoint-z) < closest:
-                        closest = np.linalg.norm(middlePoint-z)
+                    if np.linalg.norm(middlePoint-y) < closest:
+                        closest = np.linalg.norm(middlePoint-y)
                         bestchild = child
             bestchild.points_list.append(z)
-            self.update_ideal_nadir(bestchild,z)
+            self.update_ideal_nadir(bestchild,y)
             self.remove(n_list, z)
         del n_list
         
@@ -198,12 +206,12 @@ class ndtree:
         
 # Test
 
-tree = ndtree()
+#tree = ndtree()
 '''
 for y in [np.array([5,9,2]),np.array([5,8,3]),np.array([3,4,5]),np.array([0,6,3]),np.array([8,7,1])]:
     tree.update_tree(y)
 '''
-
+'''
 tree.update_tree(np.array([0,0]))
 
 for i in range(8):
@@ -211,4 +219,4 @@ for i in range(8):
 
 
 tree.show()
-
+'''

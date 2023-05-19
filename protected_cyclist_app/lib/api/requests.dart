@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
+import 'dart:convert' show utf8;
 
 class PCARoute {
   final List<List<dynamic>> waypoints;
@@ -20,8 +22,10 @@ class PCARoute {
 
 Future<List<PCARoute>> fetchRoutes(
     String startAddress, String endAddress) async {
-  final response = await http.get(Uri.parse(
-      'http://127.0.0.1:5000/protected_cyclist_api/route?start_address=$startAddress&end_address=$endAddress'));
+  final response = await http.get(
+      Uri.parse(
+          'http://127.0.0.1:5000/protected_cyclist_api/route?start_address=$startAddress&end_address=$endAddress'),
+      headers: {'Content-Type': 'application/json; charset=utf-8'});
 
   if (response.statusCode == 200) {
     final jsonResponse = json.decode(response.body);

@@ -3,6 +3,7 @@ import json, math, pickle
 
 from scipy.spatial.distance import cdist
 from six.moves.urllib.request import urlopen
+import requests
 
 app = Flask(__name__)
 
@@ -11,7 +12,8 @@ node_pos = pickle.load(open('node_pos.pickle', 'rb'))
 def get_pos_from_street(name: str, city:str):
     strForQuery = name.replace(' ', '+')
     url = 'https://nominatim.openstreetmap.org/search?q=' + strForQuery + f'%2C+{city}&format=geojson'
-    query = json.loads(urlopen(url).read())
+    response = requests.get(url)
+    query = json.loads(response.content.decode('utf-8'))
     
     return [query['features'][0]['geometry']['coordinates'][0], query['features'][0]['geometry']['coordinates'][1]]
 
@@ -35,8 +37,8 @@ routes = [
 @app.route('/protected_cyclist_api/route')
 def get_route():
     #Récupérer les paramètres de la requête
-    start_address = str(request.args.get('start_address'))
-    end_address = str(request.args.get('end_address'))
+    start_address = request.args.get('start_address')
+    end_address = request.args.get('end_address')
     print(start_address, end_address)
     #Notre structure de données comportant les routes
     response = dict()

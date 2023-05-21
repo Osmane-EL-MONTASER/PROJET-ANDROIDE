@@ -5,6 +5,8 @@ from scipy.spatial.distance import cdist
 from six.moves.urllib.request import urlopen
 import requests
 
+from astar_eps import astar_eps
+
 app = Flask(__name__)
 
 node_pos = pickle.load(open('node_pos.pickle', 'rb'))
@@ -19,31 +21,21 @@ def get_pos_from_street(name: str, city:str):
 
 #Vitesse moyenne d'un vélo 15 km/h = 0.004167 km/s
 V = 0.004167
-routes = [
-    {#<-- fais gaffe c'est un dictionnaire
-        'distance': 156, #<-- distance en mètres
-        'waypoints': [(48.8971056, 2.3591416), (48.8955245, 2.3593294)]#<-- liste encore
-    },
-    {#<-- fais gaffe c'est un dictionnaire
-        'distance': 25, #<-- distance en mètres
-        'waypoints': [(48.8860190, 2.3822270), (48.8706397, 2.3612749)]#<-- liste encore
-    },
-    {#<-- fais gaffe c'est un dictionnaire
-        'distance': 58, #<-- distance en mètres
-        'waypoints': [(49.34534, 2.23542), (48.8472876, 2.3534072)]#<-- liste encore
-    }
-]
 
 @app.route('/protected_cyclist_api/route')
 def get_route():
+    file = open("paris_graph_with_weights.pickle", "rb")
+    graphParis = pickle.load(file)
+    
     #Récupérer les paramètres de la requête
-    start_address = request.args.get('start_address')
-    end_address = request.args.get('end_address')
+    start_address = str(request.args.get('start_address'))
+    end_address = str(request.args.get('end_address'))
     print(start_address, end_address)
     #Notre structure de données comportant les routes
     response = dict()
     response['route'] = []
-
+    
+    
     #Convertir les adresses en points de notre graphe multi-objectif
     start_pos = get_pos_from_street(start_address, 'Paris')
     end_pos = get_pos_from_street(end_address, 'Paris')
@@ -58,11 +50,17 @@ def get_route():
     end_node = node_pos.index[distances_from_end.argmin()]
 
     #TO-DO Appeler a_star multi-objectif
-    #routes = dijkstra.a_star(start_node, end_node)
+    print(start_node, end_node)
+    algo = astar_eps(graphParis, 4)
+    resultastar = algo.a_star(graphParis, start_node, end_node, 1000, 0.7)
+    routes = algo.get_all_possible_path(resultastar, graphParis, end_node)
+
+    print(routes)
 
     #Conversion avant envoi
     for route in routes:
         new_route = dict()
+        route['waypoints'].reverse()
         new_route['waypoints'] = route['waypoints']
 
         d = route['distance'] / 1000 #distance mètres to km 

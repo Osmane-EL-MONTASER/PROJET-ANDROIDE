@@ -21,7 +21,7 @@ class PrioritySet(object):
         heur, rec = heapq.heappop(self.heap)
         self.set.remove(tuple(heur))
         return [heur,rec]
-    
+
 def get_heuristique(start, end):
     if start.get('heuristique') is None:
         x1, y1 = start['lon'], start['lat']
@@ -59,7 +59,7 @@ class astar_eps:
         self.nb_criteria = nb_criteria
 
 
-    def try_add_new_cost(self, lstcost:np.recarray, newcost, pareto_func, eps):
+    def try_add_new_cost(self, lsttruecost:np.recarray, lstcost:np.recarray, newcost, pareto_func, eps):
         """
         Fonction qui pour une liste de vecteurs coût donné, essaye d'ajouter un nouveau vecteur coût à cette liste
         
@@ -81,15 +81,23 @@ class astar_eps:
             True si le vecteur coût a été rajouté, False sinon
         """
         lstcopy = lstcost.copy()
+        lsttruecostcopy = lsttruecost.copy()
         lstcopy.resize(lstcost.shape[0] + 1, refcheck=False)
-        exponent = np.rint(np.emath.logn(1 + eps, newcost[0]))
+        lsttruecostcopy.resize(lsttruecost.shape[0] + 1, refcheck=False)
+
+        exponent = np.where(newcost[0] >= 1, np.rint(np.emath.logn(1 + eps, newcost[0])), 0)
         temp = [exponent]
         temp[1:] = newcost[1:]
         lstcopy[-1] = tuple(temp)
+        
+        lsttruecostcopy[-1] = newcost
+
         front = pareto_func(lstcopy.weights.tolist())
         has_updated = front[-1]
         lstcopy = lstcopy[front]
-        return lstcopy, has_updated
+        if not(has_updated):
+            lsttruecostcopy = lsttruecost
+        return lsttruecostcopy, lstcopy, has_updated
 
     def pareto_front(self, lst:np.array):
         """
@@ -176,23 +184,19 @@ class astar_eps:
             etiq = None
         return dct, front, etiq
 
-    class cost_class:
-        def __init__(self, weights, prevnode, node, previd, id):
-            self.weights = weights
-            self.prevnode = prevnode
-            self.node = node
-            self.previd = previd
-            self.id = id
-
     def a_star(self, G: nx.Graph, start, end, maxdistance, eps):
         costs = {}
-        gdraw = nx.Graph()
+        costs_eps = {}
+        paths = {}
+
         start_heuristic = get_heuristique(G.nodes[start], G.nodes[end])
         start_cost = np.array([0 for _ in range(self.nb_criteria)])
         
         to_add_queue = (start_cost + start_heuristic, -1, start, -1, 0)
         costs[start] = np.recarray((1,), dtype=self.cost_dtype)
         costs[start][0] = (start_cost, -1, start, -1, 0)
+        costs_eps[start] = np.recarray((1,), dtype=self.cost_dtype)
+        costs_eps[start][0] = (np.where(start_cost >= 1, np.rint(np.emath.logn(1 + eps, start_cost)), 0), -1, start, -1, 0)
 
         G.add_node(-1, label = "Dummy", heuristique = 0)
         queue = PrioritySet()
@@ -212,11 +216,12 @@ class astar_eps:
             cost = queued[1] #([c_v1 + heur_v,..., c_vn + heur_v], u, v, prevedgeid, curedgeid)
             #print("CURRENT ESTIMATED DISTANCE: {}".format(get_heuristique(G.nodes[cost[2]], G.nodes[end])))
             if end in costs.keys():  #Si le noeud terminal a été atteint, verifier si le noeud courant est strictement dominé ou pas par les vecteurs couts déjà existants
-                print("NOEUD TERMINAL TROUVE")
                 nextheur = get_heuristique(G.nodes[cost[2]], G.nodes[end])
                 prevheur = get_heuristique(G.nodes[cost[1]], G.nodes[end])
                 heuristic = np.array(cost[0]) + nextheur - prevheur
-                if np.all(np.any(np.array(costs[end].weights.tolist())<heuristic + maxdistance, axis=1)):
+                temp = costs[end].weights.tolist()
+                print(np.min(np.array(temp)[:,0], axis=0))
+                if np.all(np.any(np.array(temp)<heuristic, axis=1)) or np.min(np.array(temp)[:,0], axis=0) + maxdistance < heuristic[0]:
                     continue
 
             #Visiter tout les voisins du noeud courant
@@ -231,9 +236,11 @@ class astar_eps:
                 if v not in costs:
                     costs[v] = np.recarray(1, dtype=self.cost_dtype)
                     costs[v][0] = nextcost
+                    costs_eps[v] = np.recarray(1, dtype=self.cost_dtype)
+                    costs_eps[v][0] = (np.where(nextweight >= 1, np.rint(np.emath.logn(1 + eps, nextweight)), 0),cost[2], v, cost[4], counterid)
                     updated = True
                 else:
-                    costs[v], updated = self.try_add_new_cost(costs[v], nextcost, self.pareto_front_paretoset, eps)
+                    costs[v], costs_eps[v], updated = self.try_add_new_cost(costs[v], costs_eps[v], nextcost, self.pareto_front_paretoset, eps)
 
                 if updated:
                     if v == end:
@@ -247,4 +254,46 @@ class astar_eps:
 
         return costs
     
+    def build_paths(self, costs):
+        paths = {}
+        backpaths = {}
+        pathsvalues = {}
+        for record in costs.values():
+            for k in record:
+                if not(k[3] in paths):
+                    paths[k[3]] = [k[4]]
+                else:
+                    paths[k[3]].append(k[4])
+                if not(k[4] in backpaths):
+                    backpaths[k[4]] = [k[3]]
+                else:
+                    backpaths[k[4]].append(k[3])
+                pathsvalues[k[4]] = k
+        return paths, backpaths, pathsvalues
     
+    def get_all_possible_path(self, costs, graph, end):
+        allpath = []
+        possible_paths = []
+        paths, backpaths, pathsvalues = self.build_paths(costs)
+        for value in pathsvalues.values():
+            if value[2] == end:
+                possible_paths.append(value[4])
+        for pathid in possible_paths:
+            waypoints = []
+            distance = 0.0
+            currentid = pathid
+            oldcoord = graph.nodes[pathsvalues[currentid][2]]
+            waypoints.append((oldcoord['lon'], oldcoord['lat']))
+            while currentid != -1:
+                if not(currentid in pathsvalues):
+                    break
+                coord = graph.nodes[pathsvalues[currentid][2]]
+                distance += get_distance(coord['lon'], coord['lat'], oldcoord['lon'], oldcoord['lat'])
+                waypoints.append((coord['lon'], coord['lat']))
+                oldcoord = graph.nodes[pathsvalues[currentid][2]]
+                currentid = backpaths[currentid][0]
+            if currentid == -1:
+                allpath.append({'distance':distance, 'waypoints':waypoints})
+        return allpath
+        
+

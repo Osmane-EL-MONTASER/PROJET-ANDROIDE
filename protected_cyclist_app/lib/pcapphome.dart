@@ -98,7 +98,7 @@ class _PCAppHomeState extends State<PCAppHome> {
               max: 1.0,
               value: _currentSliderValue,
               divisions: 99,
-              label: _currentSliderValue.toString(),
+              label: _currentSliderValue.toStringAsFixed(2),
               onChanged: (value) {
                 setState(() {
                   _currentSliderValue = value;

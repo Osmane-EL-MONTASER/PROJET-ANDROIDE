@@ -14,7 +14,11 @@ class RouteView extends StatefulWidget {
   final double epsValue = 0.1;
 
   const RouteView(
-      {super.key, required this.startAddress, required this.endAddress, required this.maxDistance, required epsValue});
+      {super.key,
+      required this.startAddress,
+      required this.endAddress,
+      required this.maxDistance,
+      required epsValue});
 
   @override
   State<RouteView> createState() => _RouteViewState();
@@ -39,7 +43,8 @@ class _RouteViewState extends State<RouteView> {
       isLoading = true;
     });
 
-    routes = await fetchRoutes(widget.startAddress, widget.endAddress, widget.maxDistance as double, widget.epsValue);
+    routes = await fetchRoutes(widget.startAddress, widget.endAddress,
+        double.parse(widget.maxDistance), widget.epsValue);
     setState(() {
       selectedRoute = routes[0];
       selectedWaypoints =

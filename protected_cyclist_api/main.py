@@ -51,7 +51,7 @@ def get_route():
     start_node = node_pos.index[distances_from_start.argmin()]
     end_node = node_pos.index[distances_from_end.argmin()]
 
-    #TO-DO Appeler a_star multi-objectif
+    #Appeler a_star multi-objectif
     print(start_node, end_node)
     algo = astar_eps(graphParis, 4)
     resultastar = algo.a_star(graphParis, start_node, end_node, max_distance, eps)
@@ -66,7 +66,7 @@ def get_route():
         new_route['waypoints'] = route['waypoints']
 
         d = route['distance'] / 1000 #distance mètres to km 
-        new_route['distance'] = d
+        new_route['distance'] = round(d, 2)
 
         new_route['time'] = math.ceil(d / V)
         response['route'].append(new_route)

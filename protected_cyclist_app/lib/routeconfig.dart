@@ -142,7 +142,7 @@ class _RouteConfigState extends State<RouteConfig> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     Text(
-                      '${selectedRoute.time} secondes',
+                      '${(selectedRoute.time / 60).floor()} min ${selectedRoute.time % 60} s',
                       style: const TextStyle(
                           fontSize: 16,
                           color: Colors.white,

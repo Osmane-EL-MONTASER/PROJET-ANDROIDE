@@ -220,7 +220,7 @@ class astar_eps:
                 prevheur = get_heuristique(G.nodes[cost[1]], G.nodes[end])
                 heuristic = np.array(cost[0]) + nextheur - prevheur
                 temp = costs[end].weights.tolist()
-                print(np.min(np.array(temp)[:,0], axis=0))
+
                 if np.all(np.any(np.array(temp)<heuristic, axis=1)) or np.min(np.array(temp)[:,0], axis=0) + maxdistance < heuristic[0]:
                     continue
 
@@ -283,13 +283,13 @@ class astar_eps:
             distance = 0.0
             currentid = pathid
             oldcoord = graph.nodes[pathsvalues[currentid][2]]
-            waypoints.append((oldcoord['lon'], oldcoord['lat']))
+            waypoints.append((float(oldcoord['lon']), float(oldcoord['lat'])))
             while currentid != -1:
                 if not(currentid in pathsvalues):
                     break
                 coord = graph.nodes[pathsvalues[currentid][2]]
                 distance += get_distance(coord['lon'], coord['lat'], oldcoord['lon'], oldcoord['lat'])
-                waypoints.append((coord['lon'], coord['lat']))
+                waypoints.append((float(coord['lon']), float(coord['lat'])))
                 oldcoord = graph.nodes[pathsvalues[currentid][2]]
                 currentid = backpaths[currentid][0]
             if currentid == -1:

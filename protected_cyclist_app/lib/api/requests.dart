@@ -21,10 +21,10 @@ class PCARoute {
 }
 
 Future<List<PCARoute>> fetchRoutes(
-    String startAddress, String endAddress) async {
+    String startAddress, String endAddress, double maxDistance, double epsValue) async {
   final response = await http.get(
       Uri.parse(
-          'http://127.0.0.1:5000/protected_cyclist_api/route?start_address=$startAddress&end_address=$endAddress'),
+          'http://127.0.0.1:5000/protected_cyclist_api/route?start_address=$startAddress&end_address=$endAddress&max_distance=$maxDistance&eps=$epsValue'),
       headers: {'Content-Type': 'application/json; charset=utf-8'});
 
   if (response.statusCode == 200) {

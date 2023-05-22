@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -8,9 +10,11 @@ import 'package:bottom_drawer/bottom_drawer.dart';
 class RouteView extends StatefulWidget {
   final String startAddress;
   final String endAddress;
+  final String maxDistance;
+  final double epsValue = 0.1;
 
   const RouteView(
-      {super.key, required this.startAddress, required this.endAddress});
+      {super.key, required this.startAddress, required this.endAddress, required this.maxDistance, required epsValue});
 
   @override
   State<RouteView> createState() => _RouteViewState();
@@ -35,7 +39,7 @@ class _RouteViewState extends State<RouteView> {
       isLoading = true;
     });
 
-    routes = await fetchRoutes(widget.startAddress, widget.endAddress);
+    routes = await fetchRoutes(widget.startAddress, widget.endAddress, widget.maxDistance as double, widget.epsValue);
     setState(() {
       selectedRoute = routes[0];
       selectedWaypoints =

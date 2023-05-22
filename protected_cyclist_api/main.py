@@ -30,6 +30,8 @@ def get_route():
     #Récupérer les paramètres de la requête
     start_address = str(request.args.get('start_address'))
     end_address = str(request.args.get('end_address'))
+    max_distance = float(request.args.get('max_distance'))
+    eps = float(request.args.get('eps'))
     print(start_address, end_address)
     #Notre structure de données comportant les routes
     response = dict()
@@ -52,7 +54,7 @@ def get_route():
     #TO-DO Appeler a_star multi-objectif
     print(start_node, end_node)
     algo = astar_eps(graphParis, 4)
-    resultastar = algo.a_star(graphParis, start_node, end_node, 1000, 0.7)
+    resultastar = algo.a_star(graphParis, start_node, end_node, max_distance, eps)
     routes = algo.get_all_possible_path(resultastar, graphParis, end_node)
 
     print(routes)

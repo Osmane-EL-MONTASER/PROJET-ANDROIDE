@@ -10,6 +10,8 @@ class PCAppHome extends StatefulWidget {
 }
 
 class _PCAppHomeState extends State<PCAppHome> {
+  double _currentSliderValue = 0.1;
+
   final ButtonStyle flatButtonStyle = TextButton.styleFrom(
     foregroundColor: Colors.white,
     minimumSize: const Size(88, 44),
@@ -22,11 +24,14 @@ class _PCAppHomeState extends State<PCAppHome> {
 
   final TextEditingController _startAddressController = TextEditingController();
   final TextEditingController _endAddressController = TextEditingController();
+  final TextEditingController _maxDistanceController = TextEditingController();
+
 
   @override
   void dispose() {
     _startAddressController.dispose();
     _endAddressController.dispose();
+    _maxDistanceController.dispose();
     super.dispose();
   }
 
@@ -70,19 +75,51 @@ class _PCAppHomeState extends State<PCAppHome> {
             ),
           ),
           const SizedBox(
-            height: 25,
+            height: 10,
+          ),
+          SizedBox(
+            width: 300,
+            child: TextField(
+              controller: _maxDistanceController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Distance Maximum',
+              ),
+            ),
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          SizedBox(
+            width: 300,
+            child:  Slider(
+              min: 0.01,
+              max: 1.0,
+              value: _currentSliderValue,
+              divisions: 100,
+              label: _currentSliderValue.toString(),
+              onChanged: (value) {
+                setState(() {
+                  _currentSliderValue = value;
+                });
+              },
+            )
           ),
           TextButton(
             style: flatButtonStyle,
             onPressed: () {
               if (_startAddressController.text.isNotEmpty &&
-                  _endAddressController.text.isNotEmpty) {
+                  _endAddressController.text.isNotEmpty &&
+                  _maxDistanceController.text.isNotEmpty) {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                       builder: (context) => RouteView(
                           startAddress: _startAddressController.text,
-                          endAddress: _endAddressController.text)),
+                          endAddress: _endAddressController.text,
+                          maxDistance: _maxDistanceController.text,
+                          epsValue: _currentSliderValue)),
                 );
               }
             },

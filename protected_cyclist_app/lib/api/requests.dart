@@ -10,6 +10,9 @@ class PCARoute {
   final int time;
   final List<double> startPos;
   final List<double> endPos;
+  final double distance2;
+  final double distance3;
+  final double distance4;
 
   PCARoute({
     required this.waypoints,
@@ -17,6 +20,9 @@ class PCARoute {
     required this.time,
     required this.startPos,
     required this.endPos,
+    required this.distance2,
+    required this.distance3,
+    required this.distance4,
   });
 }
 
@@ -41,6 +47,9 @@ Future<List<PCARoute>> fetchRoutes(
       return PCARoute(
         waypoints: waypoints,
         distance: jsonRoute['distance'].toDouble(),
+        distance2: jsonRoute['distance2'].toDouble(),
+        distance3: jsonRoute['distance3'].toDouble(),
+        distance4: jsonRoute['distance4'].toDouble(),
         time: jsonRoute['time'],
         startPos: startPos,
         endPos: endPos,

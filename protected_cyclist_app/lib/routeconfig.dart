@@ -137,7 +137,7 @@ class _RouteConfigState extends State<RouteConfig> {
                   ]),
             ),
             Padding(
-              padding: const EdgeInsets.only(top: 32.0),
+              padding: const EdgeInsets.only(top: 2.0),
               child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
@@ -147,9 +147,37 @@ class _RouteConfigState extends State<RouteConfig> {
                           fontSize: 16,
                           color: Colors.white,
                           fontFamily: 'Raleway'),
-                    ),
+                    )
+                  ]),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 16.0),
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
                     Text(
                       '${selectedRoute.distance} km',
+                      style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.white,
+                          fontFamily: 'Raleway'),
+                    ),
+                    Text(
+                      '${selectedRoute.distance2} km',
+                      style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.white,
+                          fontFamily: 'Raleway'),
+                    ),
+                    Text(
+                      '${selectedRoute.distance3} km',
+                      style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.white,
+                          fontFamily: 'Raleway'),
+                    ),
+                    Text(
+                      '${selectedRoute.distance4} km',
                       style: const TextStyle(
                           fontSize: 16,
                           color: Colors.white,
@@ -158,7 +186,7 @@ class _RouteConfigState extends State<RouteConfig> {
                   ]),
             ),
             Padding(
-              padding: const EdgeInsets.only(top: 32.0),
+              padding: const EdgeInsets.only(top: 16.0),
               child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [

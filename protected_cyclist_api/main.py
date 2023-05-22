@@ -67,7 +67,13 @@ def get_route():
 
         d = route['distance'] / 1000 #distance mètres to km 
         new_route['distance'] = round(d, 2)
-
+        d2 = route['distance2'] / 1000 #distance mètres to km 
+        new_route['distance2'] = round(d2, 2)
+        d3 = route['distance3'] / 1000 #distance mètres to km 
+        new_route['distance3'] = round(d3, 2)
+        d4 = route['distance4'] / 1000 #distance mètres to km 
+        new_route['distance4'] = round(d4, 2)
+        
         new_route['time'] = math.ceil(d / V)
         response['route'].append(new_route)
 

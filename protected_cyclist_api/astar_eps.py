@@ -275,12 +275,13 @@ class astar_eps:
         allpath = []
         possible_paths = []
         paths, backpaths, pathsvalues = self.build_paths(costs)
+        distances = {}
         for value in pathsvalues.values():
             if value[2] == end:
                 possible_paths.append(value[4])
+                distances[value[4]] = [value[0][0], value[0][1], value[0][2], value[0][3]]
         for pathid in possible_paths:
             waypoints = []
-            distance = 0.0
             currentid = pathid
             oldcoord = graph.nodes[pathsvalues[currentid][2]]
             waypoints.append((float(oldcoord['lon']), float(oldcoord['lat'])))
@@ -288,12 +289,11 @@ class astar_eps:
                 if not(currentid in pathsvalues):
                     break
                 coord = graph.nodes[pathsvalues[currentid][2]]
-                distance += get_distance(coord['lon'], coord['lat'], oldcoord['lon'], oldcoord['lat'])
                 waypoints.append((float(coord['lon']), float(coord['lat'])))
                 oldcoord = graph.nodes[pathsvalues[currentid][2]]
                 currentid = backpaths[currentid][0]
             if currentid == -1:
-                allpath.append({'distance':distance, 'waypoints':waypoints})
+                allpath.append({'distance':distances[pathid][0], 'waypoints':waypoints, 'distance2':distances[pathid][1], 'distance3':distances[pathid][2], 'distance4':distances[pathid][3]})
         return allpath
         
 

@@ -1,5 +1,3 @@
-# Annexe 2: Manuel utilisateur
-
 *Note: Pour le moment, seule la version Windows de l'application est disponible. Mais il est possible de build via Flutter un exécutable pour chaque plateforme avec les bons SDKs installés sur la machine. (Aucun changement de code requis)*
 
 ## Installation de Python et des pré-requis

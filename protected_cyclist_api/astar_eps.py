@@ -3,9 +3,6 @@ import heapq
 import numpy as np
 from paretoset import paretoset
 import geopy.distance
-import matplotlib.pyplot as plt
-import utm
-import time
 
 class PrioritySet(object):
     def __init__(self):
@@ -32,21 +29,6 @@ def get_heuristique(start, end):
 def get_distance(lat_start, lon_start, lat_goal, long_goal):
     distance = geopy.distance.geodesic((lat_goal, long_goal), (lat_start, lon_start)).m
     return distance
-
-def draw_add_graph(g, u, udata, v, vdata, counter):
-    g.add_node(u)
-    g.nodes[u].update(udata)
-    xy = utm.from_latlon(float(g.nodes[u]['lat']),float(g.nodes[u]['lon']))
-    g.nodes[u]['pos'] = (xy[0],xy[1])
-    g.add_node(v)
-    g.nodes[v].update(vdata)
-    xy = utm.from_latlon(float(g.nodes[v]['lat']),float(g.nodes[v]['lon']))
-    g.nodes[v]['pos'] = (xy[0],xy[1])
-    g.add_edge(u,v)
-    nx.draw_networkx(g, nx.get_node_attributes(g, 'pos'), node_size = 1000/g.number_of_nodes(), with_labels = False, width=10/g.number_of_nodes())
-    if(counter % 10) == 0:
-        #print(len(g.edges(u)))
-        plt.show()
 
 class astar_eps:
     """
@@ -187,7 +169,6 @@ class astar_eps:
     def a_star(self, G: nx.Graph, start, end, maxdistance, eps):
         costs = {}
         costs_eps = {}
-        paths = {}
 
         start_heuristic = get_heuristique(G.nodes[start], G.nodes[end])
         start_cost = np.array([0 for _ in range(self.nb_criteria)])
@@ -274,7 +255,7 @@ class astar_eps:
     def get_all_possible_path(self, costs, graph, end):
         allpath = []
         possible_paths = []
-        paths, backpaths, pathsvalues = self.build_paths(costs)
+        _, backpaths, pathsvalues = self.build_paths(costs)
         distances = {}
         for value in pathsvalues.values():
             if value[2] == end:

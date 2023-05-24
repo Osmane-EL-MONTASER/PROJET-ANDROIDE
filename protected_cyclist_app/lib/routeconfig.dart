@@ -159,28 +159,28 @@ class _RouteConfigState extends State<RouteConfig> {
                       '${selectedRoute.distance} km',
                       style: const TextStyle(
                           fontSize: 16,
-                          color: Color.fromARGB(255, 255, 0, 0),
+                          color: Color.fromARGB(255, 0, 175, 0),
                           fontFamily: 'Raleway'),
                     ),
                     Text(
                       '${selectedRoute.distance2} km',
                       style: const TextStyle(
                           fontSize: 16,
-                          color: Color.fromARGB(255, 255, 153, 0),
+                          color: Color.fromARGB(255, 123, 255, 0),
                           fontFamily: 'Raleway'),
                     ),
                     Text(
                       '${selectedRoute.distance3} km',
                       style: const TextStyle(
                           fontSize: 16,
-                          color: Color.fromARGB(255, 123, 255, 0),
+                          color: Color.fromARGB(255, 255, 153, 0),
                           fontFamily: 'Raleway'),
                     ),
                     Text(
                       '${selectedRoute.distance4} km',
                       style: const TextStyle(
                           fontSize: 16,
-                          color: Color.fromARGB(255, 0, 175, 0),
+                          color: Color.fromARGB(255, 255, 0, 0),
                           fontFamily: 'Raleway'),
                     )
                   ]),

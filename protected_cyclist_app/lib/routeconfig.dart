@@ -147,6 +147,13 @@ class _RouteConfigState extends State<RouteConfig> {
                           fontSize: 16,
                           color: Colors.white,
                           fontFamily: 'Raleway'),
+                    ),
+                    Text(
+                      'Distance totale: ${selectedRoute.distance} km',
+                      style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.white,
+                          fontFamily: 'Raleway'),
                     )
                   ]),
             ),
@@ -156,28 +163,28 @@ class _RouteConfigState extends State<RouteConfig> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     Text(
-                      '${selectedRoute.distance} km',
+                      '${(selectedRoute.distance - selectedRoute.distance2).toStringAsFixed(2)} km',
                       style: const TextStyle(
                           fontSize: 16,
                           color: Color.fromARGB(255, 0, 175, 0),
                           fontFamily: 'Raleway'),
                     ),
                     Text(
-                      '${selectedRoute.distance2} km',
+                      '${(selectedRoute.distance2 - selectedRoute.distance3).toStringAsFixed(2)} km',
                       style: const TextStyle(
                           fontSize: 16,
                           color: Color.fromARGB(255, 123, 255, 0),
                           fontFamily: 'Raleway'),
                     ),
                     Text(
-                      '${selectedRoute.distance3} km',
+                      '${(selectedRoute.distance3 - selectedRoute.distance4).toStringAsFixed(2)} km',
                       style: const TextStyle(
                           fontSize: 16,
                           color: Color.fromARGB(255, 255, 153, 0),
                           fontFamily: 'Raleway'),
                     ),
                     Text(
-                      '${selectedRoute.distance4} km',
+                      '${selectedRoute.distance4.toStringAsFixed(2)} km',
                       style: const TextStyle(
                           fontSize: 16,
                           color: Color.fromARGB(255, 255, 0, 0),
